@@ -1,0 +1,322 @@
+ <!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Relógio — Analógico + Digital</title>
+<style>
+  :root{
+    --bg:#0f1724;
+    --card:#0b1220;
+    --accent:#4fd1c5;
+    --muted:#9aa6b2;
+    --glass: rgba(255,255,255,0.03);
+    --shadow: 0 10px 30px rgba(2,6,23,0.6);
+    --size: 320px;
+    color-scheme: dark;
+  }
+  [data-theme="light"]{
+    --bg: #f3f7fb;
+    --card: #ffffff;
+    --accent: #0ea5a4;
+    --muted: #4b5563;
+    --glass: rgba(0,0,0,0.03);
+    --shadow: 0 10px 30px rgba(15,23,42,0.08);
+    color-scheme: light;
+  }
+
+  *{box-sizing:border-box;font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+  html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#071122);display:flex;align-items:center;justify-content:center;padding:24px;}
+  .card{
+    width:min(92%,760px);
+    background:linear-gradient(180deg,rgba(255,255,255,0.02), transparent), var(--card);
+    border-radius:18px;
+    padding:26px;
+    box-shadow:var(--shadow);
+    display:grid;
+    grid-template-columns: 1fr 260px;
+    gap:20px;
+    align-items:center;
+    backdrop-filter: blur(6px);
+  }
+
+  .left{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    align-items:center;
+  }
+
+  /* Clock face */
+  .clock{
+    width:var(--size);
+    height:var(--size);
+    border-radius:50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.02), transparent 20%),
+                linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
+    display:grid;
+    place-items:center;
+    position:relative;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.45), inset 0 6px 18px rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .ring{
+    width:88%;
+    height:88%;
+    border-radius:50%;
+    display:grid;
+    place-items:center;
+    position:relative;
+    background: conic-gradient(from 0deg, rgba(0,0,0,0.03), transparent 20%);
+  }
+
+  /* ticks */
+  .tick{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform-origin: 0  -calc(var(--size) / 2 + 1px);
+    background:var(--muted);
+    opacity:0.85;
+  }
+  .tick.hour {
+    width:4px;
+    height:14px;
+    border-radius:2px;
+    transform-origin:center calc(var(--size)/2 * -1);
+  }
+  .tick.min {
+    width:2px;height:8px;border-radius:2px;
+    opacity:0.6;
+  }
+
+  /* hands */
+  .hand{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform-origin:50% 90%;
+    transform:translate(-50%,-10%) rotate(0deg);
+    transition: transform 0.05s linear;
+    pointer-events:none;
+  }
+  .hand.hour{
+    width:8px;
+    height:35%;
+    border-radius:8px;
+    background: linear-gradient(180deg, var(--accent), rgba(0,0,0,0.2));
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  }
+  .hand.min{
+    width:6px;height:45%;border-radius:6px;
+    background: linear-gradient(180deg, #c7f9f4, rgba(0,0,0,0.15));
+    box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  }
+  .hand.sec{
+    width:2px;height:48%;border-radius:2px;
+    background:var(--accent); 
+    filter: drop-shadow(0 2px 6px rgba(79,209,197,0.12));
+  }
+  .hub{
+    width:14px;height:14px;border-radius:50%;background:var(--card);border:3px solid var(--accent);position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    box-shadow:0 2px 8px rgba(0,0,0,0.4);
+  }
+
+  /* right panel */
+  .right{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    align-items:flex-start;
+    padding:6px 6px;
+  }
+  .digital{
+    font-size:36px;
+    font-weight:600;
+    letter-spacing:1px;
+    color:var(--accent);
+    margin-bottom:4px;
+  }
+  .small{
+    color:var(--muted);
+    font-size:13px;
+  }
+  .date{
+    font-weight:500;
+    font-size:16px;
+    color:var(--muted);
+    margin-top:6px;
+  }
+
+  .controls{
+    margin-top:auto;
+    display:flex;
+    gap:10px;
+    width:100%;
+    justify-content:flex-end;
+    align-items:center;
+  }
+  .btn{
+    background:var(--glass);
+    color:var(--muted);
+    border:1px solid rgba(255,255,255,0.03);
+    padding:8px 12px;border-radius:10px;font-weight:600;cursor:pointer;
+    transition:transform .12s ease;
+  }
+  .btn:active{transform:translateY(1px);}
+
+  @media (max-width:760px){
+    .card{grid-template-columns:1fr; padding:18px;}
+    .right{align-items:center;text-align:center}
+    .controls{justify-content:center}
+  }
+</style>
+</head>
+<body>
+  <div class="card" id="app" data-theme="dark" role="application" aria-label="Relógio analógico e digital">
+    <div class="left">
+      <div class="clock" aria-hidden="true">
+        <div class="ring" id="face">
+          <!-- ticks will be injected by JS -->
+          <div class="hand hour" id="hourHand" aria-hidden="true"></div>
+          <div class="hand min" id="minHand" aria-hidden="true"></div>
+          <div class="hand sec" id="secHand" aria-hidden="true"></div>
+          <div class="hub" aria-hidden="true"></div>
+        </div>
+      </div>
+      <div class="small">Relógio com movimento suave · Atualiza em tempo real</div>
+    </div>
+
+    <div class="right">
+      <div style="display:flex; flex-direction:column; gap:6px; width:100%; align-items:flex-end;">
+        <div class="digital" id="digital" aria-live="polite">--:--:--</div>
+        <div class="date" id="date">Carregando data…</div>
+        <div class="small" id="tz">Fuso horário do navegador</div>
+      </div>
+
+      <div class="controls" role="group" aria-label="Controles do relógio">
+        <button class="btn" id="toggleTheme" title="Alternar tema (claro/escuro)">Tema</button>
+        <button class="btn" id="toggleFormat" title="Alternar 12/24h">24h</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const root = document.getElementById('app');
+  const hourHand = document.getElementById('hourHand');
+  const minHand = document.getElementById('minHand');
+  const secHand = document.getElementById('secHand');
+  const digital = document.getElementById('digital');
+  const dateEl = document.getElementById('date');
+  const tzEl = document.getElementById('tz');
+  const toggleThemeBtn = document.getElementById('toggleTheme');
+  const toggleFormatBtn = document.getElementById('toggleFormat');
+
+  // Estado
+  let use24 = true;
+
+  // criar ticks (horas e minutos)
+  const face = document.getElementById('face');
+  const sizePx = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--size')) || 320;
+  for(let i=0;i<60;i++){
+    const t = document.createElement('div');
+    t.className = 'tick ' + (i%5 === 0 ? 'hour' : 'min');
+    const angle = i * 6;
+    // posicionamento via transform: translate(-50%, -50%) then rotate + translate outward
+    t.style.transform = `translate(-50%,-50%) rotate(${angle}deg) translateY(calc(-0.5 * var(--size)))`;
+    // make hour ticks slightly longer & darker
+    face.appendChild(t);
+  }
+
+  // mostra fuso horário do navegador (nome curto)
+  try {
+    const tzName = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Local';
+    tzEl.textContent = tzName;
+  } catch(e){
+    tzEl.textContent = 'Fuso horário local';
+  }
+
+  // atualiza relógio: usa requestAnimationFrame para movimento suave do ponteiro dos segundos
+  function update(){
+    const now = new Date();
+    const ms = now.getMilliseconds();
+    const s = now.getSeconds() + ms/1000;
+    const m = now.getMinutes() + s/60;
+    const h = (now.getHours() % 12) + m/60;
+
+    // graus
+    const secDeg = s * 6; // 360/60
+    const minDeg = m * 6;
+    const hourDeg = h * 30; // 360/12
+
+    hourHand.style.transform = `translate(-50%,-10%) rotate(${hourDeg}deg)`;
+    minHand.style.transform = `translate(-50%,-10%) rotate(${minDeg}deg)`;
+    secHand.style.transform = `translate(-50%,-10%) rotate(${secDeg}deg)`;
+
+    // digital display
+    let hours = now.getHours();
+    const minutes = now.getMinutes();
+    const seconds = now.getSeconds();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const pad = (n)=> String(n).padStart(2,'0');
+    const displayH = use24 ? pad(hours) : pad(((hours+11)%12)+1);
+    digital.textContent = `${displayH}:${pad(minutes)}:${pad(seconds)}${use24 ? '' : ' ' + ampm}`;
+
+    // date: ex: Segunda, 9 Setembro 2025
+    const dayName = new Intl.DateTimeFormat(navigator.language, {weekday:'long'}).format(now);
+    const day = now.getDate();
+    const monthName = new Intl.DateTimeFormat(navigator.language, {month:'long'}).format(now);
+    const year = now.getFullYear();
+    dateEl.textContent = `${capitalize(dayName)}, ${day} ${capitalize(monthName)} ${year}`;
+
+    // loop
+    requestAnimationFrame(update);
+  }
+
+  function capitalize(s){
+    if(!s) return s;
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  // tema persistente simples (localStorage)
+  function initTheme(){
+    const saved = localStorage.getItem('relogio-theme');
+    if(saved === 'light'){
+      root.setAttribute('data-theme','light');
+    } else {
+      root.setAttribute('data-theme','dark');
+    }
+  }
+  toggleThemeBtn.addEventListener('click', ()=>{
+    const cur = root.getAttribute('data-theme');
+    const next = cur === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('relogio-theme', next);
+  });
+
+  // formato 12/24 persistente
+  const savedFormat = localStorage.getItem('relogio-24h');
+  if(savedFormat !== null) use24 = savedFormat === 'true';
+  toggleFormatBtn.textContent = use24 ? '24h' : '12h';
+  toggleFormatBtn.addEventListener('click', ()=>{
+    use24 = !use24;
+    localStorage.setItem('relogio-24h', String(use24));
+    toggleFormatBtn.textContent = use24 ? '24h' : '12h';
+  });
+
+  // iniciar
+  initTheme();
+  requestAnimationFrame(update);
+
+  // acessibilidade: atualizar título da página com horário a cada minuto (opcional)
+  setInterval(()=>{
+    const now = new Date();
+    document.title = `Relógio — ${now.toLocaleTimeString()}`;
+  }, 60_000);
+
+})();
+</script>
+</body>
+</html>
